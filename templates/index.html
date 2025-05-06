@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Column Averaged \(CO_2\) Concentration Dashboard (wcheung)</title>
+
+  <!-- Leaflet and Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <!-- MathJax -->
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+  <!-- Google Font for custom styling (optional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* General Container and Centering */
+    .container {
+      max-width: 600px;
+      margin-top: 5px;
+      padding: 10px;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    /* Custom slider styling */
+    #slide {
+      width: 100%;
+      height: 2px;  /* Thinner height to make it look like a line */
+      background: #ddd;
+      border-radius: 1px;
+      outline: none;
+      -webkit-appearance: none;
+      transition: background 0.3s;
+      position: relative;
+    }
+
+    /* Custom slider thumb (round) */
+    #slide::-webkit-slider-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4caf50;
+      cursor: pointer;
+      -webkit-appearance: none;
+      border: 2px solid #fff;
+      transition: background-color 0.3s ease;
+    }
+
+    #slide::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4caf50;
+      cursor: pointer;
+      border: 2px solid #fff;
+      transition: background-color 0.3s ease;
+    }
+
+    /* Month Ticks Styling */
+    #monthTicks {
+      position: relative;
+      width: 100%;
+      height: 20px;
+      margin-top: 10px;
+    }
+
+    #monthTicks div {
+      position: absolute;
+      font-size: 12px;
+      color: #333;
+      transform: translateX(-50%);
+    }
+
+    /* Hide sliderAmount */
+    #sliderAmount {
+      display: none; /* Hide the date display */
+      font-family: 'Roboto', sans-serif; /* Set custom font */
+      font-size: 18px; /* Change font size */
+      font-weight: bold; /* Make the text bold */
+      color: #333; /* Text color */
+    }
+
+    /* Styling for visualization frame */
+    #visualizationFrame {
+      max-width: 100%;
+      margin-bottom: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container text-center">
+    <h3><strong>Column Averaged \(CO_2\) Concentration \((XCO_2)\)</strong></h3>
+
+    <form action="/" method="post" enctype="multipart/form-data" id="form">
+      <label for="year">Choose a year:</label>
+      <select name="year" id="year" class="form-control" style="display: inline-block; width: auto;">
+        <option value="2015">2015</option>
+        <option value="2016">2016</option>
+        <option value="2017">2017</option>
+        <option value="2018">2018</option>
+        <option value="2019">2019</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+      </select>
+
+      <div>
+        <img id="visualizationFrame" src="{{ url_for('visualization', year=2015, month=1, day=1) }}" width="100%"/>
+      </div>
+
+      <!-- Slider Input -->
+      <input id="slide" type="range" min="0" max="351" value="0" name="slide">
+
+      <!-- Hidden Date Display -->
+      <div id="sliderAmount"><strong>January 1, 2015</strong></div>
+    </form>
+
+    <!-- Month Ticks Below Slider -->
+    <div id="monthTicks">
+      <div style="left: 0%;">Jan</div>
+      <div style="left: 8.8%;">Feb</div>
+      <div style="left: 17.1%;">Mar</div>
+      <div style="left: 25.7%;">Apr</div>
+      <div style="left: 34.2%;">May</div>
+      <div style="left: 42.5%;">Jun</div>
+      <div style="left: 50.8%;">Jul</div>
+      <div style="left: 59.4%;">Aug</div>
+      <div style="left: 68.0%;">Sep</div>
+      <div style="left: 76.5%;">Oct</div>
+      <div style="left: 84.8%;">Nov</div>
+      <div style="left: 93.2%;">Dec</div>
+    </div>
+  </div>
+
+  <!-- JS Scripts -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <script>
+    const months = [
+      "January ", "February ", "March ", "April ", "May ", "June ",
+      "July ", "August ", "September ", "October ", "November ", "December "
+    ];
+    const days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 16];
+    const cumulativeSum = (sum => value => sum += value)(0);
+    const bounds = days.map(cumulativeSum);
+
+    let slide = document.getElementById('slide');
+    let sliderDiv = document.getElementById('sliderAmount');
+
+    let cache = {};
+    let results;
+    let delayTimer;
+
+    function updateSliderDisplay(value) {
+      const current = parseInt(value, 10);
+      const index = bounds.findIndex(num => num > current);
+      if (index === -1) return;
+
+      const month = index + 1; // 1-based month
+      const day = index === 0 ? current + 1 : current - bounds[index - 1] + 1;
+      const year = document.getElementById('year').value;
+
+      sliderDiv.innerHTML = `<strong>${months[index]}${day}, ${year}</strong>`;
+
+      const visualizationFrame = document.getElementById('visualizationFrame');
+      visualizationFrame.src = `/visualization?year=${year}&month=${month}&day=${day}`;
+    }
+
+    document.getElementById('year').addEventListener('change', () => {
+      updateSliderDisplay(slide.value);
+    });
+
+    slide.addEventListener('input', function () {
+      clearTimeout(delayTimer);
+      updateSliderDisplay(this.value);
+    });
+
+    // Initialize slider label
+    updateSliderDisplay(slide.value);
+  </script>
+</body>
+</html>

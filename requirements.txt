@@ -1,0 +1,6 @@
+numpy
+matplotlib
+basemap
+gdal
+python-dotenv
+flask
