@@ -2,16 +2,16 @@
 
 ## 🌍 Overview
 
-The **CO₂ Concentration** project provides an interactive web application that visualizes global atmospheric CO₂ concentrations over time. Built using Python and Flask, the app processes atmospheric CO₂ data from raster files, generates PNG visualizations, and serves them through a user-friendly interface.
+The **Column-Averaged CO₂ Concentration** project is a time-series web application that animates the progression of global atmospheric CO₂ levels. Built with Python and Flask, it processes geospatial raster data from the NASA/GSFC/GMAO Carbon Group using `GDAL`. The application generates high-resolution PNG frames and presents them through a web interface equipped with an interactive slider for seamless temporal navigation.
 
 ![CO₂ Concentration Visualization](https://github.com/wirrywoo/co2-concentration/blob/main/static/combined.gif?raw=true)
 
 ## 🚀 Features
 
-- **Interactive Map**: View global CO₂ concentrations with intuitive navigation.
-- **Time Series Animation**: Explore how CO₂ levels have changed over time.
-- **Data Processing**: Efficiently handles large datasets using multiprocessing.
-- **Responsive Design**: Optimized for both desktop and mobile devices.
+- **Animated Global CO₂ Maps**: Visualize changes in column-averaged CO₂ over time.
+- **Interactive Slider**: Navigate across dates to observe variations in CO₂ concentration.
+- **High-Resolution Visualization**: Generates publication-quality PNG frames using `matplotlib` and `Basemap`.
+- **S3 Integration**: Downloads raw satellite data directly from a public AWS S3 bucket.
 
 ## 📦 Installation
 
@@ -52,10 +52,9 @@ The application will be accessible at `http://127.0.0.1:5000/`.
 
 The application processes TIFF files containing atmospheric CO₂ concentration data:
 
-- **Data Download**: Retrieves raw data from an S3 bucket.
-- **Data Processing**: Converts TIFF data to masked arrays.
-- **Visualization**: Generates PNG images representing CO₂ concentrations.
-- **Optimization**: Utilizes multiprocessing to accelerate image generation.
+- **Data Download**: Retrieves raw data from an S3 bucket using `awscli`.
+- **Data Processing**: Converts TIFF data to masked arrays using `GDAL`.
+- **Visualization**: Generates PNG images representing CO₂ concentrations using `Basemap`.
 
 ## 📁 Project Structure
 
