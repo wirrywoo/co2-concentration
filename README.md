@@ -1,4 +1,4 @@
-# CO₂ Concentration Interactive Visualization
+# Column-Averaged CO₂ Concentration Interactive Visualization
 
 ## 🌍 Overview
 
